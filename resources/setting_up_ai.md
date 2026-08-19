@@ -5,115 +5,44 @@ MacroPhase's AI features — the coach, food scanner, and meal analysis — work
 ## Quick Strategy
 
 - **Web Grounding (Default: DuckDuckGo)**: Live web search is completely free and enabled by default via DuckDuckGo (no API key needed). You can optionally connect BYOK providers (Jina, Tavily, Gemini 3, or SearXNG) in **Settings → AI Features → Web Grounding**.
-- **Ultra-budget paid:** Use OpenRouter. It taps into efficient models like DeepSeek and Xiaomi for fractions of a cent.
+- **Ultra-budget paid:** Use OpenRouter. It taps into efficient models like DeepSeek, Xiaomi, and Gemini for fractions of a cent.
 
 ## Supported Providers
 
 - **Gemini** — Default. Free tier available. Requires API key.
-- **OpenAI Compatible** — GPT-5.4-mini and others. Requires API key.
-- **OpenRouter** — Many models including budget options. Requires API key.
+- **OpenAI Compatible** — GPT-4o-mini, GPT-5, etc. Requires API key.
+- **OpenRouter** — Hundreds of models filtered by use case. Requires API key.
 - **Anthropic** — Claude models. Requires API key.
 - **Local Gemma** — Fully offline, on-device. No API key.
 
-## Live Top Models by Use Case (Auto-Updating)
+---
 
-<div id="dynamic-ai-widget" style="background:#1E1E20; border:1px solid #2E2E30; border-radius:14px; padding:18px; margin:20px 0; font-family: sans-serif;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <h3 style="color:#fff; margin:0; font-size:16px;">⚡ Live Models from OpenRouter</h3>
-    <select id="usecase-select" onchange="renderModels()" style="background:#2A2A2C; color:#fff; border:1px solid #3A3A3C; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer;">
-      <option value="coach">AI Coach (Tool Calling & Fast)</option>
-      <option value="vision">Food Scanner (Vision & Multimodal)</option>
-      <option value="budget">Ultra-Budget / Background (Lowest Cost)</option>
-    </select>
-  </div>
+## Finding the Best Live Models on OpenRouter
 
-  <div id="ai-loading" style="color:#A1A1A6; font-size:13px;">Fetching latest models from OpenRouter API...</div>
+You can paste any model ID from OpenRouter directly into MacroPhase (**More → AI Settings → Custom Model ID**). OpenRouter updates models and pricing daily. Use the filtered links below to find the current top models for each use case:
 
-  <table id="ai-table" style="width:100%; display:none; border-collapse:collapse; font-size:13px; color:#fff; margin-top:8px;">
-    <thead>
-      <tr style="border-bottom:1px solid #2E2E30; color:#A1A1A6; text-align:left;">
-        <th style="padding:8px;">Model ID (Paste into App)</th>
-        <th style="padding:8px;">Context</th>
-        <th style="padding:8px;">Input / 1M</th>
-        <th style="padding:8px;">Output / 1M</th>
-      </tr>
-    </thead>
-    <tbody id="ai-body"></tbody>
-  </table>
-</div>
+### 1. AI Coach (Tool Calling & Fast Conversation)
+The AI Coach requires models that support **tool calling** (function calling) and at least 16k context to handle meal logging, memory retrieval, and recipe generation.
 
-<script>
-  let allModels = [];
+- 🔗 **[Explore Live Tool-Calling Models on OpenRouter](https://openrouter.ai/models?supported_parameters=tools&order=pricing-low-to-high)**
+- *Look for: Models with the `tools` tag and low input/output pricing per 1M tokens.*
 
-  async function fetchOpenRouter() {
-    try {
-      const res = await fetch('https://openrouter.ai/api/v1/models');
-      const json = await res.json();
-      allModels = json.data || [];
-      renderModels();
-    } catch(e) {
-      document.getElementById('ai-loading').innerText = 'Check OpenRouter for live status.';
-    }
-  }
+### 2. Food & Receipt Scanner (Vision & Multimodal)
+The food and receipt scanners require models with **multimodal image input** to read nutrition panels, plate photos, and printed receipts.
 
-  function renderModels() {
-    if (!allModels.length) return;
-    const useCase = document.getElementById('usecase-select').value;
-    let filtered = [];
+- 🔗 **[Explore Live Vision Models on OpenRouter](https://openrouter.ai/models?order=pricing-low-to-high)**
+- *Look for: Models with `Image` modality support.*
 
-    if (useCase === 'coach') {
-      // Must support tools (function calling), max $1.50/M input, min 16k context
-      filtered = allModels.filter(m => {
-        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
-        const tools = m.supported_parameters && m.supported_parameters.includes('tools');
-        return tools && cost > 0 && cost <= 1.50 && m.context_length >= 16000;
-      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
-    } 
-    else if (useCase === 'vision') {
-      // Must support vision/image input, max $2.00/M input
-      filtered = allModels.filter(m => {
-        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
-        const isVision = m.architecture?.modality?.includes('image') || m.description?.toLowerCase().includes('vision');
-        return isVision && cost <= 2.00;
-      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
-    } 
-    else if (useCase === 'budget') {
-      // Lowest cost (< $0.30/M) with at least 32k context
-      filtered = allModels.filter(m => {
-        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
-        return cost > 0 && cost <= 0.30 && m.context_length >= 32000;
-      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
-    }
+### 3. Ultra-Budget / Background Insights
+Used for background analytics and weekly summaries where low cost-per-token is the main priority.
 
-    const tbody = document.getElementById('ai-body');
-    tbody.innerHTML = '';
-
-    filtered.slice(0, 6).forEach(m => {
-      const inPrice = '$' + (parseFloat(m.pricing.prompt) * 1000000).toFixed(2);
-      const outPrice = '$' + (parseFloat(m.pricing.completion) * 1000000).toFixed(2);
-      const contextK = Math.round(m.context_length / 1024) + 'k';
-      tbody.innerHTML += `
-        <tr style="border-bottom:1px solid #2E2E30;">
-          <td style="padding:8px; font-weight:bold; color:#8B5CF6;">
-            <div>${m.name}</div>
-            <code style="font-size:11px; color:#A1A1A6; background:#151517; padding:2px 6px; border-radius:4px;">${m.id}</code>
-          </td>
-          <td style="padding:8px; color:#A1A1A6;">${contextK}</td>
-          <td style="padding:8px;">${inPrice}</td>
-          <td style="padding:8px;">${outPrice}</td>
-        </tr>
-      `;
-    });
-
-    document.getElementById('ai-loading').style.display = 'none';
-    document.getElementById('ai-table').style.display = 'table';
-  }
-
-  fetchOpenRouter();
-</script>
+- 🔗 **[Explore Lowest-Cost Models on OpenRouter](https://openrouter.ai/models?order=pricing-low-to-high)**
+- *Look for: Sub-cent models with 32k+ context windows.*
 
 > 💡 **Key Idea**
-> You don't need to pick the same model for everything. Use Gemini's free tier for the coach and scanner, and upgrade specific features if you need more capability.
+> You don't need to use the same model for everything. In **More → AI Settings**, you can configure different models for the Coach, the Food Scanner, and Background Insights independently. Copy any `provider/model-id` from OpenRouter and paste it into the custom model field.
+
+---
 
 ## Grounded Product & Web Search
 
@@ -127,51 +56,49 @@ MacroPhase first searches its local databases and Open Food Facts at no cost. Fo
 
 Web search is seamlessly integrated into the coach and can also be triggered explicitly via the `/search` and `/browse` slash commands.
 
+---
+
 ## Getting an API Key
 
 ### Gemini (Recommended Start)
 
-1. Go to aistudio.google.com/apikey
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/app/apikey)
 2. Sign in with your Google account
 3. Click **Create API Key**
 4. Copy the key
 
 ### OpenRouter
 
-1. Go to openrouter.ai/keys
+1. Go to [openrouter.ai/keys](https://openrouter.ai/keys)
 2. Create an account
 3. Navigate to **Keys**
-4. Create a new key
-5. Add credits
+4. Create a new key and add credits ($5 will last months)
 
 ### OpenAI
 
-1. Go to platform.openai.com/api-keys
-2. Sign in
-3. Navigate to **API Keys**
-4. **Create new secret key**
-5. Copy it (won't be shown again)
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Sign in and create a new secret key
 
 ### Anthropic
 
-1. Go to console.anthropic.com/settings/keys
-2. Sign in
-3. Navigate to **API Keys**
-4. Create a new key
+1. Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+2. Sign in and generate a key
+
+---
 
 ## Configuring in MacroPhase
 
-1. Open **More** tab
-2. Tap **AI** under Feature Settings
+1. Open the **More** tab
+2. Tap **AI Settings**
 3. Select your **AI Provider**
 4. Paste your API key
-5. Select models for coaching, scanning, and insights
+5. Select or type your desired model IDs
 
-> **Security:** Your API key is stored in your device's encrypted preferences. It is never sent to any intermediary server — requests go directly from your phone to the configured AI provider.
+> 🔒 **Security:** Your API key is stored in your device's encrypted preferences. It is never sent to any MacroPhase server — requests go directly from your phone to your chosen provider.
 
 ## Troubleshooting
 
-- **"API key invalid"** — Check you copied the full key. Some providers need credits first.
-- **Coach not responding** — Check internet (except Local Gemma). Try a different model.
-- **Slow responses** — Free tiers may have rate limits. Try a faster model.
-- **Scanner missing foods** — Photo from above, good lighting, separated items.
+- **"API key invalid"** — Check you copied the full key. Some providers need a credit balance.
+- **Coach not responding** — Check internet connectivity. Try switching models.
+- **Slow responses** — Free tiers may have rate limits. Switch to a faster flash model.
+- **Scanner missing foods** — Take photos from directly above with good lighting.
