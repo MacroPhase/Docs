@@ -1,21 +1,25 @@
-# Food Databases
+# Food Databases & Search Engine
 
-MacroPhase searches multiple food databases to find what you're looking for. Some are bundled with the app, others are downloadable offline packs, and the rest come from the live web.
+MacroPhase features a custom-built, local-first search engine that indexes multiple international databases and adapts to your eating habits.
 
-## How Search Works
+## The Search Engine: SQLite FTS5 + BM25
 
-When you search for food, MacroPhase checks sources in this order:
+Rather than running slow database queries or relying on external cloud servers, MacroPhase compiles all your installed food databases into a unified **SQLite FTS5 (Full-Text Search 5) Inverted Index**:
 
-1. **Your history** — Foods you've logged before get top priority
-2. **Local databases** — Bundled and downloaded offline databases on your device
-3. **Open Food Facts** — Online database with millions of products
-4. **Cached results** — Previously fetched API results (30-day TTL)
+- **Sub-Millisecond Speed**: Instant prefix matching and diacritic normalization (accents, umlauts) as you type.
+- **BM25 Relevance Ranking**: Standard information-retrieval scoring ensures the most textually relevant matches appear first.
+- **Behavioral Re-Ranking**: Dynamically boosts results based on your personal usage:
+  - **Exact Name Match**: $+3,000$ boost
+  - **Brand Match**: $+2,000$ boost
+  - **Lifetime Log Frequency**: Up to $+1,500$ boost (your favorite staples always beat out obscure items)
+  - **Favorited Items**: $+1,000$ boost
+  - **7-Day Recency**: $+500$ boost
 
-The results are ranked by relevance, with your own history always coming first.
+---
 
 ## Bundled & Regional Offline Databases
 
-Install or manage these from **More → Food Databases** for complete offline search coverage:
+Install or manage regional packs from **More → Food Databases** for complete offline search coverage:
 
 - **USDA Foundation Foods** — 6,000+ whole foods with 38 nutrients.
 - **Swedish Food Database (Livsmedelsverket)** — Verified Swedish food composition data.
@@ -25,17 +29,13 @@ Install or manage these from **More → Food Databases** for complete offline se
 - **CoFID** — UK database, strong vitamin and mineral data.
 - **BEDCA** — Spanish commercial foods, 29,600+ items.
 - **AUSNUT** — Australian/NZ database, 3,700+ foods.
-- **Open Food Facts Regional Packs** — Thousands of products for specific regions (North America, Western Europe, Northern Europe, Eastern Europe, UK & Ireland, Oceania, East Asia).
+- **Open Food Facts Regional Packs** — Thousands of products for North America, Western Europe, Northern Europe, Eastern Europe, UK & Ireland, Oceania, East Asia.
 
 > 💡 **Key Idea**
-> The more regional packs you install, the better your offline search becomes. Regional packs dramatically improve barcode scanning speed and accuracy without requiring an internet connection.
+> Installing regional packs downloads them to your local FTS5 search index. Barcode scanning and text search work completely offline at airplane mode speeds.
 
-## Barcode Scanning
+---
 
-When you scan a barcode, MacroPhase checks:
+## Online Web Search Fallback
 
-1. Your custom foods (if you've created one with that barcode)
-2. Regional Open Food Facts packs on your device
-3. The online Open Food Facts API
-
-If you frequently scan local brands, save it as a custom food with the barcode to guarantee instant recognition.
+If an item is not found in your offline databases, MacroPhase can search the live **Open Food Facts API** or use the AI Coach's **Web Grounding** (DuckDuckGo, Brave, Google, Bing) to find and verify nutrition facts in seconds.

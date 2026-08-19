@@ -1,63 +1,51 @@
 # Data Storage
 
-Everything MacroPhase stores lives on your device. No cloud. No account. No backend server.
+Everything MacroPhase stores lives entirely on your device. No cloud account. No central server. Complete local privacy.
 
-## What's Stored
+## What's Stored Locally
 
-### Nutrition Data
-
+### Nutrition & Food
 - **Food logs** — Every entry with 30+ nutrient columns
-- **Weight entries** — Daily weigh-ins
-- **Custom foods** — Your created items
-- **Favorites** — Hearted foods
+- **Weight entries** — Daily weigh-ins and scale sources
+- **Custom foods** — Created items with custom tags and emojis
+- **Favorites** — Curated foods with custom tags
 - **Search cache** — Cached API results (30-day TTL)
-- **Scanned products** — Barcode cache (max 2,000)
-- **Serving memory** — Per-food serving preferences
+- **Scanned products** — Barcode cache
+- **Serving memory** — Per-food serving preferences and custom servings
 
-### AI & Memory
+### Smart Shopping & Pantry
+- **Shopping lists & items** — Active grocery lists, categories, and checked items
+- **Scanned receipts** — OCR line items, prices, currencies, and timestamps
+- **Pantry inventory** — In-stock items and purchase history for restocking
 
-- **User profile memory** — Preferences, goals, constraints
+### AI & Long-Term Memory
+- **User profile memory** — Preferences, goals, dietary restrictions
 - **Food memory** — Frequently eaten foods with aliases
-- **Behavior memory** — Observed patterns
-- **Episode memory** — Time-bound context (auto-expires)
-- **Food picks** — Time-based suggestions
-- **Conversations** — Coach chat sessions
-- **Messages** — Individual chat messages
+- **Behavior memory** — Observed meal timing and adherence patterns
+- **Episode memory** — Contextual events (auto-expiring)
+- **Food picks** — Time-of-day suggestions with weekly decay
+- **Conversations & messages** — Chat history with the AI Coach
 
 ### Body & Progress
-
-- **Body metrics** — Body fat %, measurements
-- **Progress photos** — File paths and metadata
-- **Check-in records** — Weekly history
-- **Subjective scores** — Hunger, energy, sleep, stress
-- **Goal timeline** — Goal change history
+- **Body metrics** — Body fat %, waist, chest, arms circumferences
+- **Progress photos** — JPEG files in app-private storage (`{filesDir}/progress_photos/`)
+- **Check-in records** — Weekly check-in reviews and adjustments
+- **Subjective scores** — Hunger, energy, sleep, and stress ratings
+- **Goal timeline** — Dynamic goal history
 
 ### Recipes
+- **Recipes & ingredients** — Multi-ingredient components, total prepared weights, and serving portions
 
-- **Recipes** — Metadata
-- **Ingredients** — Components with nutrition data
+---
 
 ## Database Details
 
 - **Engine:** Room (SQLite)
-- **Version:** 22
-- **Migrations:** 20 over the app's lifetime
-- **Location:** App-private storage
+- **Entities:** 22 local tables
+- **Location:** App-private encrypted storage
+- **Settings:** Preferences and API keys stored in Android DataStore
 
-## Settings
+## Data Management & Exports
 
-Preferences (theme, units, AI provider, API keys) are stored in Android DataStore, separate from the Room database.
-
-## Progress Photos
-
-Saved as JPEG files in `{filesDir}/progress_photos/{date}_{angle}.jpg`. The database stores only the file path. Deleting a photo removes both the record and the file.
-
-## Data Integrity
-
-Room enforces type safety, migration-based schema upgrades, foreign key constraints (recipe ingredients cascade-delete), and unique indices (one weight entry per date).
-
-## Accessing Your Data
-
-- **In-app** — Dashboard, Food Log, Progress, Memory screens
-- **Export** — CSV from More → Profile Settings → Data Management
-- **AI Coach** — Can query via tools (only what it needs for the current conversation)
+- **Full Export / Backup**: Export all database tables as standard CSV from **More → Settings → Data Management → Export Data**.
+- **Developer Wipes**: Granular data wipe controls in **Settings → Developer Settings**.

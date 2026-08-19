@@ -30,9 +30,10 @@ Both apps derive a dynamic Total Daily Energy Expenditure (TDEE) by coupling dai
 ### Search Architecture
 
 - **Traditional Tracker**: Cloud-hosted Typesense cluster with remote indexing. Highly responsive, but requires an active internet connection.
-- **MacroPhase**: Local-first SQLite database architecture (`BundledDatabaseHelper`):
-  - **Bundled & Regional Packs**: Offline databases for USDA Foundation (6,000+ items), Swedish Livsmedelsverket, Korean RDA 10th Rev (K-FIND), South Asian IFCT 2017, and Open Food Facts regional packs.
-  - **Web Grounding Fallback**: When an item isn't in local databases, the AI Coach uses real-time web search (DuckDuckGo, Brave, Google, Bing, Jina, Tavily) to verify exact brand nutrition facts before saving.
+- **MacroPhase**: On-device **Unified SQLite FTS5 (Full-Text Search 5) Inverted Index** (`FoodSearchIndex` + `FoodSearcher`):
+  - **BM25 & Multi-Factor Behavioral Ranking**: Computes BM25 textual relevance combined with lifetime log frequency boosts, brand matching, exact name boosts, and 7-day recency.
+  - **Bundled & Regional Offline Packs**: Indexes USDA Foundation, Swedish Livsmedelsverket, Korean RDA 10th Rev (K-FIND), South Asian IFCT 2017, and Open Food Facts regional packs.
+  - **Live Web Grounding Fallback**: When an item isn't in local databases, the AI Coach uses real-time web search (DuckDuckGo, Brave, Google, Bing, Jina, Tavily) to verify exact brand nutrition facts before saving.
 
 ---
 
