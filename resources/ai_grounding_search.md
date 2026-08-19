@@ -16,13 +16,12 @@ When you ask the AI Coach about specific branded items, restaurant chains, or re
 
 You can choose how the AI Coach searches the web in **Settings → AI Features → Web Grounding**:
 
-1. **Zero-Key DuckDuckGo (Default)**: Works immediately out of the box with zero setup and no API key required.
-2. **Bring Your Own Key (BYOK)**: Connect your own provider API key for faster latency and higher search depth:
-   - **Brave Search**
-   - **Google Custom Search**
-   - **Bing Search**
-   - **Perplexity AI**
-   - **Tavily AI**
+1. **DuckDuckGo (Default & 100% Free)**: Works immediately out of the box with zero configuration and no API key required.
+2. **Bring Your Own Key (BYOK)**: Connect your own provider API key for specialized web scraping or custom search:
+   - **Jina**: Clean markdown page extraction for AI grounding.
+   - **Tavily**: Fast structured search designed for LLM agents.
+   - **Gemini 3**: Native Google search grounding via your Gemini API key.
+   - **Custom SearXNG**: Connect your own private self-hosted search instance.
 
 ---
 
