@@ -1,10 +1,10 @@
 # Setting Up AI Features
 
-MacroPhase's AI features — the coach, food scanner, and meal analysis — work best with an API key. Here's how to set it up, and which models to pick.
+MacroPhase's AI features — the coach, food scanner, and meal analysis — work best with an API key. Here's how to set it up, which models to pick, and how web grounding works.
 
 ## Quick Strategy
 
-- **BYOK web grounding:** Web search is separate from the coach model. Choose Jina, Tavily, Gemini 2.5 Free, Gemini 3, or a custom SearXNG instance in **Settings → AI → Web Grounding**.
+- **Web Grounding (Default: DuckDuckGo)**: Live web search is completely free and enabled by default via DuckDuckGo (no API key needed). You can optionally connect BYOK providers (Jina, Tavily, Gemini 3, or SearXNG) in **Settings → AI Features → Web Grounding**.
 - **Ultra-budget paid:** Use OpenRouter. It taps into efficient models like DeepSeek and Xiaomi for fractions of a cent.
 
 ## Supported Providers
@@ -15,49 +15,117 @@ MacroPhase's AI features — the coach, food scanner, and meal analysis — work
 - **Anthropic** — Claude models. Requires API key.
 - **Local Gemma** — Fully offline, on-device. No API key.
 
-## Recommended Models
+## Live Top Models by Use Case (Auto-Updating)
 
-### For the AI Coach
+<div id="dynamic-ai-widget" style="background:#1E1E20; border:1px solid #2E2E30; border-radius:14px; padding:18px; margin:20px 0; font-family: sans-serif;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 style="color:#fff; margin:0; font-size:16px;">⚡ Live Models from OpenRouter</h3>
+    <select id="usecase-select" onchange="renderModels()" style="background:#2A2A2C; color:#fff; border:1px solid #3A3A3C; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer;">
+      <option value="coach">AI Coach (Tool Calling & Fast)</option>
+      <option value="vision">Food Scanner (Vision & Multimodal)</option>
+      <option value="budget">Ultra-Budget / Background (Lowest Cost)</option>
+    </select>
+  </div>
 
-The coach handles real-time conversation, tool use, and user feedback. Speed matters here.
+  <div id="ai-loading" style="color:#A1A1A6; font-size:13px;">Fetching latest models from OpenRouter API...</div>
 
-- **Gemini:** `gemini-3.6-flash` — Best current balance of intelligence, speed, and tool use
-- **OpenRouter:** `deepseek-v4-flash` — Massive context, ~$0.14/M input tokens
-- **Anthropic:** `claude-haiku-4.5` — Frontier-class reasoning, fast, $1.00/M input
-- **OpenAI:** `gpt-5.4-mini` — Snappy and smart, slightly higher cost
+  <table id="ai-table" style="width:100%; display:none; border-collapse:collapse; font-size:13px; color:#fff; margin-top:8px;">
+    <thead>
+      <tr style="border-bottom:1px solid #2E2E30; color:#A1A1A6; text-align:left;">
+        <th style="padding:8px;">Model ID (Paste into App)</th>
+        <th style="padding:8px;">Context</th>
+        <th style="padding:8px;">Input / 1M</th>
+        <th style="padding:8px;">Output / 1M</th>
+      </tr>
+    </thead>
+    <tbody id="ai-body"></tbody>
+  </table>
+</div>
 
-### For the Food Scanner
+<script>
+  let allModels = [];
 
-The scanner processes plate photos, nutrition labels, and screenshots. Vision quality matters here.
+  async function fetchOpenRouter() {
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/models');
+      const json = await res.json();
+      allModels = json.data || [];
+      renderModels();
+    } catch(e) {
+      document.getElementById('ai-loading').innerText = 'Check OpenRouter for live status.';
+    }
+  }
 
-- **Gemini:** `gemini-3.6-flash` — Strong current multimodal and OCR model
-- **OpenRouter:** `xiaomi/mimo-v2.5` — Top vision benchmarks, ~$0.14/M input
-- **Anthropic:** `claude-sonnet-4.6` — Peak accuracy for complex layouts, $3.00/M input
-- **OpenAI:** `gpt-5.4-mini` — Good entry-level multimodal
+  function renderModels() {
+    if (!allModels.length) return;
+    const useCase = document.getElementById('usecase-select').value;
+    let filtered = [];
 
-### For Insights & Summaries
+    if (useCase === 'coach') {
+      // Must support tools (function calling), max $1.50/M input, min 16k context
+      filtered = allModels.filter(m => {
+        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
+        const tools = m.supported_parameters && m.supported_parameters.includes('tools');
+        return tools && cost > 0 && cost <= 1.50 && m.context_length >= 16000;
+      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
+    } 
+    else if (useCase === 'vision') {
+      // Must support vision/image input, max $2.00/M input
+      filtered = allModels.filter(m => {
+        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
+        const isVision = m.architecture?.modality?.includes('image') || m.description?.toLowerCase().includes('vision');
+        return isVision && cost <= 2.00;
+      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
+    } 
+    else if (useCase === 'budget') {
+      // Lowest cost (< $0.30/M) with at least 32k context
+      filtered = allModels.filter(m => {
+        const cost = parseFloat(m.pricing?.prompt || 0) * 1000000;
+        return cost > 0 && cost <= 0.30 && m.context_length >= 32000;
+      }).sort((a, b) => (parseFloat(a.pricing.prompt) - parseFloat(b.pricing.prompt)));
+    }
 
-Background analytics and weekly summaries. Cost-per-token matters more than speed.
+    const tbody = document.getElementById('ai-body');
+    tbody.innerHTML = '';
 
-- **Gemini:** `gemini-3.5-flash-lite` — Fastest, lowest-cost current Gemini model
-- **OpenRouter:** `deepseek-v4-flash` — Best large-scale text processing, ~$0.14/M input
-- **Anthropic:** `claude-haiku-4.5` — Strong instruction following
-- **OpenAI:** `gpt-5.5-instant` — Excellent synthesis, higher cost
+    filtered.slice(0, 6).forEach(m => {
+      const inPrice = '$' + (parseFloat(m.pricing.prompt) * 1000000).toFixed(2);
+      const outPrice = '$' + (parseFloat(m.pricing.completion) * 1000000).toFixed(2);
+      const contextK = Math.round(m.context_length / 1024) + 'k';
+      tbody.innerHTML += `
+        <tr style="border-bottom:1px solid #2E2E30;">
+          <td style="padding:8px; font-weight:bold; color:#8B5CF6;">
+            <div>${m.name}</div>
+            <code style="font-size:11px; color:#A1A1A6; background:#151517; padding:2px 6px; border-radius:4px;">${m.id}</code>
+          </td>
+          <td style="padding:8px; color:#A1A1A6;">${contextK}</td>
+          <td style="padding:8px;">${inPrice}</td>
+          <td style="padding:8px;">${outPrice}</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('ai-table').style.display = 'table';
+  }
+
+  fetchOpenRouter();
+</script>
 
 > 💡 **Key Idea**
 > You don't need to pick the same model for everything. Use Gemini's free tier for the coach and scanner, and upgrade specific features if you need more capability.
 
-## Grounded Product Search
+## Grounded Product & Web Search
 
-Phase first searches its local databases and Open Food Facts at no cost. For an exact branded product that is still missing, Phase can use the selected web grounding provider and show cited evidence before saving a custom food.
+MacroPhase first searches its local databases and Open Food Facts at no cost. For exact restaurant items or branded products that are still missing, the coach can search the web:
 
-- **Jina:** free starter tokens; designed to return clean page contents for AI grounding.
-- **Tavily:** recurring free monthly credits with a personal API key.
-- **Gemini 2.5 Free:** up to 500 grounded requests per day on Google's free tier; scheduled to shut down October 16, 2026.
-- **Gemini 3:** requires a billing-enabled Gemini project.
-- **Custom SearXNG:** requires an HTTPS instance whose JSON search API is enabled.
+- **DuckDuckGo (Free & Default):** Built-in zero-key search. No configuration or API key needed.
+- **Jina:** Free starter tokens; returns clean markdown page contents for AI grounding.
+- **Tavily:** Free monthly credits with personal API key; structured web research.
+- **Gemini 3:** Native Google search grounding with a Gemini API key.
+- **Custom SearXNG:** Self-hosted open-source meta-search instance.
 
-Web search is off by default and is enabled per message from the chat **+** menu. If a provider quota is exhausted or evidence is ambiguous, Phase continues normally and asks for a nutrition-label photo when exact product macros are required.
+Web search is seamlessly integrated into the coach and can also be triggered explicitly via the `/search` and `/browse` slash commands.
 
 ## Getting an API Key
 
@@ -99,13 +167,7 @@ Web search is off by default and is enabled per message from the chat **+** menu
 4. Paste your API key
 5. Select models for coaching, scanning, and insights
 
-> **Security:** Your API key is stored in your device's encrypted preferences. It's never sent to MacroPhase (there is no MacroPhase server). Only transmitted to the provider you configured.
-
-## The Food Scanner
-
-Tap the camera icon in the Food Log tab, take a photo, and the AI identifies foods and estimates portions. Works best with good lighting and clearly visible, separated items.
-
-You can configure a different image model in AI Settings if your provider supports it.
+> **Security:** Your API key is stored in your device's encrypted preferences. It is never sent to any intermediary server — requests go directly from your phone to the configured AI provider.
 
 ## Troubleshooting
 
