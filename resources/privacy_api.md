@@ -54,7 +54,7 @@ Use MacroPhase without AI entirely — don't configure an API key, disable AI fe
 
 ## Note on Experimental Sync Endpoint
 
-MacroPhase includes a dormant cloud sync stub (`macrophase.up.railway.app`). This was an experimental sync prototype for invited beta testers. It is inactive/404 by default and does not receive or store any user data unless a custom sync server URL and auth JWT are explicitly configured in developer settings.
+For full open-source transparency if you inspect network traffic or source code: MacroPhase includes a dormant cloud sync stub (`macrophase.up.railway.app`). This was an experimental sync prototype for invited beta testers. It is inactive/404 by default and does not receive or store any user data unless a custom sync server URL and auth JWT are explicitly configured in developer settings.
 
 ## Export and Deletion
 
