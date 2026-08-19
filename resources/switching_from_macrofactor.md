@@ -25,18 +25,19 @@ Barcode scanning uses ML Kit on-device. The food database includes regional pack
 
 Most nutrition apps bolt on an AI chatbot that answers questions. MacroPhase's coach is an agent — it doesn't just suggest, it acts.
 
-The coach has 18+ tools it can use during a conversation:
+The coach has 33 agent tools it can use during a conversation:
 
 - **Log food** directly from a description ("had 200g chicken breast with rice for lunch")
-- **Search the database** on your behalf
-- **Analyze meal photos** with per-item macro breakdowns
-- **Parse nutrition labels** from a photo
-- **Create and manage recipes**
+- **Search offline & online databases** on your behalf
+- **Analyze meal photos & nutrition labels** with per-item macro breakdowns
+- **Create and manage recipes & custom foods**
+- **Manage your Smart Shopping List** & suggest groceries for upcoming meals
 - **Query your weight trends** and expenditure data
 - **Adjust your calorie targets** based on your goals
+- **Search the live web** for restaurant nutrition and facts
 - **Access Health Connect** data (steps, sleep, heart rate)
 
-This is the difference between an AI that tells you what to do and one that actually does it for you.
+This is the difference between an AI that tells you what to do and one that actually executes actions inside the app.
 
 ### Dual AI Architecture
 
